@@ -1,0 +1,15 @@
+[project]
+name = "ai_sport_agent"
+version = "0.1.0"
+description = "CLI и библиотека для анализа тренировок по FIT-файлам"
+authors = [ { name = "Твой Ник", email = "you@example.com" } ]
+readme = "README.md"
+requires-python = ">=3.10,<4.0"
+
+[tool.poetry.dependencies]
+# сюда допиши библиотеки, которые будешь использовать, например:
+python = ">=3.10,<4.0"
+
+[tool.poetry.dev-dependencies]
+pytest = "^7.0"
+
