@@ -99,9 +99,94 @@ def group_dynamic(steps: List[Step], min_repeat: int = 2) -> List[Union[Step, Re
     return grouped
 
 def detect_steps_from_power(path: Path) -> List[Step]:
-    # Фоллбэк: весь файл — один рабочий шаг
-    now = datetime.now(timezone.utc)
-    return [Step(now, now + timedelta(seconds=1), 0.0, "work")]
+    """Простая обработка FIT-файла на основе мощности.
+
+    Реализована минимально необходимая логика протокола FIT:
+    читается заголовок файла, сообщения определения и данные, извлекаются
+    только поля ``timestamp`` (field_num=253) и ``power`` (field_num=7).
+
+    На выходе формируется список шагов длительностью 1s.
+    """
+
+    steps: List[Step] = []
+
+    with path.open("rb") as f:
+        # --- FIT header ---------------------------------------------------
+        header_size = f.read(1)[0]
+        header = f.read(header_size - 1)
+        protocol_version = header[0]
+        profile_version = struct.unpack("<H", header[1:3])[0]
+        data_size = struct.unpack("<I", header[3:7])[0]
+        # bytes 7:11 = data type ('.FIT'), remaining may contain CRC
+
+        data_start = f.tell()
+        definitions = {}
+
+        while f.tell() - data_start < data_size:
+            rec_header_b = f.read(1)
+            if not rec_header_b:
+                break
+            rec_header = rec_header_b[0]
+            is_def = (rec_header & 0x80) != 0
+            local_type = rec_header & 0x0F
+            dev_data_flag = (rec_header & 0x20) != 0
+
+            if is_def:
+                # Definition Message
+                reserved, arch = struct.unpack("BB", f.read(2))
+                endian = "<" if arch == 0 else ">"
+                global_msg_num = struct.unpack(endian + "H", f.read(2))[0]
+                num_fields = f.read(1)[0]
+                fields = []
+                total = 0
+                for _ in range(num_fields):
+                    field_num, size, base_type = struct.unpack("BBB", f.read(3))
+                    fields.append((field_num, size, base_type))
+                    total += size
+                dev_fields = []
+                if dev_data_flag:
+                    num_dev_fields = f.read(1)[0]
+                    for _ in range(num_dev_fields):
+                        field_num, size, dev_idx = struct.unpack("BBB", f.read(3))
+                        dev_fields.append((field_num, size, dev_idx))
+                        total += size
+                definitions[local_type] = {
+                    "endian": endian,
+                    "fields": fields,
+                    "dev_fields": dev_fields,
+                    "size": total,
+                }
+            else:
+                # Data Message
+                defn = definitions.get(local_type)
+                if not defn:
+                    break
+                raw = f.read(defn["size"])
+                endian = defn["endian"]
+                ts = None
+                power = None
+                offset = 0
+                for field_num, size, base_type in defn["fields"]:
+                    chunk = raw[offset : offset + size]
+                    if field_num == 253 and size == 4:
+                        val = struct.unpack(endian + "I", chunk)[0]
+                        ts = FIT_EPOCH + timedelta(seconds=val)
+                    elif field_num == 7 and size == 2:
+                        power = struct.unpack(endian + "H", chunk)[0]
+                    offset += size
+                for field_num, size, dev_idx in defn["dev_fields"]:
+                    offset += size
+                if ts is not None and power is not None:
+                    steps.append(
+                        Step(
+                            ts,
+                            ts + timedelta(seconds=1),
+                            float(power),
+                            "work" if power > 0 else "recovery",
+                        )
+                    )
+
+    return steps
 
 def extract_workout_steps(path: Path) -> List[dict]:
     # TODO: читать workout_step-сообщения
