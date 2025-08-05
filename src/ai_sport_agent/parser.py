@@ -197,6 +197,61 @@ def extract_laps(path: Path) -> List[dict]:
     return []
 
 def parse_fit(path: Path) -> dict:
+    date = datetime.now(timezone.utc)
+    try:
+        with path.open("rb") as f:
+            header_size = f.read(1)[0]
+            header = f.read(header_size - 1)
+            data_size = struct.unpack("<I", header[3:7])[0]
+            data_start = f.tell()
+            definitions = {}
+            while f.tell() - data_start < data_size:
+                rec_header_b = f.read(1)
+                if not rec_header_b:
+                    break
+                rec_header = rec_header_b[0]
+                is_def = (rec_header & 0x80) != 0
+                local_type = rec_header & 0x0F
+                dev_data_flag = (rec_header & 0x20) != 0
+                if is_def:
+                    reserved, arch = struct.unpack("BB", f.read(2))
+                    endian = "<" if arch == 0 else ">"
+                    global_msg_num = struct.unpack(endian + "H", f.read(2))[0]
+                    num_fields = f.read(1)[0]
+                    fields = []
+                    total = 0
+                    for _ in range(num_fields):
+                        field_num, size, base_type = struct.unpack("BBB", f.read(3))
+                        fields.append((field_num, size, base_type))
+                        total += size
+                    if dev_data_flag:
+                        num_dev_fields = f.read(1)[0]
+                        f.read(num_dev_fields * 3)
+                    definitions[local_type] = {
+                        "endian": endian,
+                        "fields": fields,
+                        "size": total,
+                        "global_msg_num": global_msg_num,
+                    }
+                else:
+                    defn = definitions.get(local_type)
+                    if not defn:
+                        break
+                    raw_msg = f.read(defn["size"])
+                    if defn["global_msg_num"] == 0:
+                        endian = defn["endian"]
+                        offset = 0
+                        for field_num, size, base_type in defn["fields"]:
+                            chunk = raw_msg[offset : offset + size]
+                            if field_num == 253 and size == 4:
+                                val = struct.unpack(endian + "I", chunk)[0]
+                                date = FIT_EPOCH + timedelta(seconds=val)
+                                break
+                            offset += size
+                        break
+    except Exception:
+        pass
+
     # 1) Сессия запланированных шагов?
     ws = extract_workout_steps(path)
     if ws:
@@ -216,7 +271,7 @@ def parse_fit(path: Path) -> dict:
     intervals = [iv.to_dict() for iv in grouped]
     return {
         "file": str(path),
-        "date": datetime.now(timezone.utc).isoformat(),
+        "date": date.isoformat(),
         "mode": mode,
         "intervals": intervals
     }
