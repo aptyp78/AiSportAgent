@@ -5,3 +5,4 @@ venv/
 .DS_Store
 
 /src/ai_sport_agent/__pycache__/
+node_modules/
