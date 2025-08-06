@@ -1,60 +1,58 @@
-import React, { useState } from 'react';
+import React, { useRef, useState } from 'react';
 
-const FileUpload: React.FC = () => {
-    const [file, setFile] = useState<File | null>(null);
-    const [message, setMessage] = useState<string>('');
-    const [results, setResults] = useState<any>(null);
+interface FileUploadProps {
+  onResults: (data: any) => void;
+}
 
-    const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-        if (event.target.files && event.target.files[0]) {
-            setFile(event.target.files[0]);
-            setMessage('');
-        }
-    };
+const FileUpload: React.FC<FileUploadProps> = ({ onResults }) => {
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-    const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-        event.preventDefault();
-        if (!file) {
-            setMessage('Please upload a FIT file.');
-            return;
-        }
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    setError(null);
+    const file = e.target.files?.[0];
+    if (!file) return;
 
-        const formData = new FormData();
-        formData.append('file', file);
+    if (!file.name.toLowerCase().endsWith('.fit')) {
+      setError('Пожалуйста, выберите FIT-файл.');
+      return;
+    }
 
-        try {
-            const response = await fetch('/api/analyze', {
-                method: 'POST',
-                body: formData,
-            });
+    const formData = new FormData();
+    formData.append('file', file);
 
-            if (!response.ok) {
-                throw new Error('Failed to analyze the file.');
-            }
+    setLoading(true);
+    try {
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!response.ok) {
+        throw new Error('Ошибка загрузки файла');
+      }
+      const data = await response.json();
+      onResults(data);
+    } catch (err: any) {
+      setError(err.message || 'Ошибка загрузки');
+    } finally {
+      setLoading(false);
+    }
+  };
 
-            const data = await response.json();
-            setResults(data);
-            setMessage('');
-        } catch (error) {
-            setMessage(error.message);
-        }
-    };
-
-    return (
-        <div>
-            <form onSubmit={handleSubmit}>
-                <input type="file" accept=".fit" onChange={handleFileChange} />
-                <button type="submit">Upload</button>
-            </form>
-            {message && <p>{message}</p>}
-            {results && (
-                <div>
-                    <h2>Analysis Results</h2>
-                    {/* Render results here */}
-                </div>
-            )}
-        </div>
-    );
+  return (
+    <div>
+      <input
+        type="file"
+        accept=".fit"
+        ref={fileInputRef}
+        onChange={handleFileChange}
+        disabled={loading}
+      />
+      {loading && <div>Загрузка...</div>}
+      {error && <div style={{ color: 'red' }}>{error}</div>}
+    </div>
+  );
 };
 
 export default FileUpload;
