@@ -1,0 +1,3 @@
+Flask
+fitparse
+flask-cors
