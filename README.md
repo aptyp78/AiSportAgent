@@ -1,2 +1,59 @@
-# AiSportAgent
-…
+# Fit Analyzer Next
+
+This project is a web application for analyzing FIT files using Next.js for the frontend and a Python backend. The application allows users to upload FIT files, which are then processed to extract various metrics related to fitness activities.
+
+## Project Structure
+
+The project is divided into two main parts: the frontend and the backend.
+
+### Frontend
+
+The frontend is built using Next.js and React. It includes the following key components:
+
+- **FileUpload**: A component for uploading FIT files.
+- **AnalysisResults**: A component for displaying the results of the FIT file analysis.
+- **Pages**: The main application pages, including the home page where users can upload files and view results.
+
+### Backend
+
+The backend is implemented in Python using Flask. It handles file uploads and processes the FIT files using the `fitparse` library. The backend exposes an API endpoint that the frontend can call to submit FIT files and receive analysis results.
+
+## Setup Instructions
+
+### Frontend
+
+1. Navigate to the `frontend` directory.
+2. Install dependencies:
+   ```
+   npm install
+   ```
+3. Run the development server:
+   ```
+   npm run dev
+   ```
+
+### Backend
+
+1. Navigate to the `backend` directory.
+2. Install dependencies:
+   ```
+   pip install -r requirements.txt
+   ```
+3. Run the Flask application:
+   ```
+   python app.py
+   ```
+
+## Deployment
+
+This project is configured to be deployed on Vercel. Ensure that the `vercel.json` file is properly set up with the necessary environment variables and build settings.
+
+## Usage
+
+1. Open the application in your browser.
+2. Use the file upload component to select and upload a FIT file.
+3. View the analysis results displayed on the page.
+
+## Contributing
+
+Contributions are welcome! Please feel free to submit a pull request or open an issue for any enhancements or bug fixes.
