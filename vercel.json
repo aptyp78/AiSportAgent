@@ -22,6 +22,5 @@
       "src": "/(.*)",
       "dest": "frontend/out/$1"
     }
-  ],
-  "root": "frontend"
+  ]
 }
