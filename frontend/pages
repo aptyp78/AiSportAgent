@@ -1,3 +1,0 @@
-rm *.ts *.tsx 2>/dev/null || true
-# filepath: /workspaces/AiSportAgent/frontend/app
-rm *.ts *.tsx 2>/dev/null || true

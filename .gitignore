@@ -6,3 +6,4 @@ venv/
 
 /src/ai_sport_agent/__pycache__/
 node_modules/
+.vercel

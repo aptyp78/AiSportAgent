@@ -3,3 +3,4 @@
 *.hot-update.*
 fit-analyzer-next@1.0.0
 next
+.vercel
