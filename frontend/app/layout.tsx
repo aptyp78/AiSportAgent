@@ -1,5 +1,5 @@
 // app/layout.tsx
-import "./globals.css";
+// import "./globals.css";
 
 export const metadata = { title: "AI-Sport Agent" };
 
