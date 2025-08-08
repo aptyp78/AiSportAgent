@@ -6,6 +6,10 @@ from typing import List, Optional
 class Record(BaseModel):
     timestamp: Optional[int] = None
     power: Optional[float] = None
+    developer_fields: Optional[dict] = None
+    speed_m_s: Optional[float] = None
+    pace_s_km: Optional[float] = None
+    grade_pct: Optional[float] = None
 
 class Lap(BaseModel):
     start: Optional[int] = None

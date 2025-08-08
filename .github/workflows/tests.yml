@@ -20,3 +20,13 @@ jobs:
       # Ставим dev-экстры, а если их нет в pyproject — запасной путь
       - run: pip install -e ".[dev]" || pip install pytest hypothesis httpx "uvicorn[standard]" fastapi typer "pydantic>=2" tqdm
       - run: pytest -q
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=7",
+  "hypothesis>=6",
+  "httpx>=0.24",
+  "uvicorn[standard]>=0.23",
+  "tqdm>=4.66",
+  "python-multipart"
+]
