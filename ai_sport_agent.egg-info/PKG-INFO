@@ -1,5 +1,23 @@
+Metadata-Version: 2.4
+Name: ai-sport-agent
+Version: 0.0.1
+Summary: AI coach tooling for IRONMAN disciplines
+Author: aptyp78
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+License-File: LICENSE
+Requires-Dist: pydantic<3,>=2.5
+Requires-Dist: typer<1,>=0.12
+Requires-Dist: fastapi<1,>=0.110
+Provides-Extra: dev
+Requires-Dist: pytest>=7; extra == "dev"
+Requires-Dist: hypothesis>=6; extra == "dev"
+Requires-Dist: httpx>=0.24; extra == "dev"
+Requires-Dist: uvicorn[standard]>=0.23; extra == "dev"
+Requires-Dist: tqdm>=4.66; extra == "dev"
+Dynamic: license-file
+
 # Fit Analyzer Next
-![tests](https://github.com/aptyp78/AiSportAgent/actions/workflows/tests.yml/badge.svg)
 
 This project is a web application for analyzing FIT files using Next.js for the frontend and a Python backend. The application allows users to upload FIT files, which are then processed to extract various metrics related to fitness activities.
 

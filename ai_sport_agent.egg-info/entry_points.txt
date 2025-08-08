@@ -1,0 +1,2 @@
+[console_scripts]
+fitparser = ai_sport_agent.cli:main
