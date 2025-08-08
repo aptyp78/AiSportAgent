@@ -11,10 +11,12 @@ FIT_EPOCH = datetime(1989, 12, 31, tzinfo=timezone.utc)
 def parse_fit(path: Path) -> Workout:
     with path.open("rb") as f:
         header_size = f.read(1)[0]
-        header = f.read(header_size - 1)
-        protocol_version = header[0]
-        profile_version = struct.unpack("<H", header[1:3])[0]
-        data_size = struct.unpack("<I", header[3:7])[0]
+        protocol_version = f.read(1)[0]
+        profile_version = struct.unpack("<H", f.read(2))[0]
+        data_size = struct.unpack("<I", f.read(4))[0]
+        data_type = f.read(4)
+        crc = f.read(header_size - 12) if header_size > 12 else b''
+        print(f"header_size={header_size}, protocol_version={protocol_version}, profile_version={profile_version}, data_size={data_size}, data_type={data_type}, crc={crc}")
         data_start = f.tell()
         definitions = {}
         dev_field_defs = {}
@@ -23,34 +25,52 @@ def parse_fit(path: Path) -> Workout:
         base_timestamp = None
 
         while f.tell() - data_start < data_size:
+            print(f"Loop: f.tell()={f.tell()}, data_start={data_start}, data_size={data_size}")
             rec_header_b = f.read(1)
+            print(f"Read rec_header_b: {rec_header_b}")
             if not rec_header_b:
+                print("No rec_header_b, breaking loop.")
                 break
             rec_header = rec_header_b[0]
             is_def = (rec_header & 0x80) != 0
             local_type = rec_header & 0x0F
             dev_data_flag = (rec_header & 0x20) != 0
             is_compressed_ts = (rec_header & 0x60) == 0x60
-
+            print(f"Parsed header: rec_header={rec_header}, is_def={is_def}, local_type={local_type}, dev_data_flag={dev_data_flag}, is_compressed_ts={is_compressed_ts}")
             if is_def:
-                reserved, arch = struct.unpack("BB", f.read(2))
+                print(f"Definition message: header_byte={rec_header_b.hex()}, local_type={local_type}, dev_data_flag={dev_data_flag}")
+                print(f"definitions before: {definitions}")
+                reserved_bytes = f.read(2)
+                print(f"reserved_bytes: {reserved_bytes.hex()}")
+                reserved, arch = struct.unpack("BB", reserved_bytes)
+                print(f"reserved={reserved}, arch={arch}")
+                global_msg_num_bytes = f.read(2)
+                print(f"global_msg_num_bytes: {global_msg_num_bytes.hex()}")
                 endian = "<" if arch == 0 else ">"
-                global_msg_num = struct.unpack(endian + "H", f.read(2))[0]
-                num_fields = f.read(1)[0]
+                global_msg_num = struct.unpack(endian + "H", global_msg_num_bytes)[0]
+                print(f"global_msg_num={global_msg_num}")
+                num_fields_byte = f.read(1)
+                print(f"num_fields_byte: {num_fields_byte.hex()}")
+                num_fields = num_fields_byte[0]
                 fields = []
                 total = 0
-                for _ in range(num_fields):
-                    field_num, size, base_type = struct.unpack("BBB", f.read(3))
+                for i in range(num_fields):
+                    field_bytes = f.read(3)
+                    print(f"field_bytes[{i}]: {field_bytes.hex()}")
+                    field_num, size, base_type = struct.unpack("BBB", field_bytes)
                     fields.append((field_num, size, base_type))
                     total += size
                 dev_fields = []
                 if dev_data_flag:
-                    num_dev_fields = f.read(1)[0]
-                    for _ in range(num_dev_fields):
-                        field_num, size, dev_idx = struct.unpack("BBB", f.read(3))
+                    num_dev_fields_byte = f.read(1)
+                    print(f"num_dev_fields_byte: {num_dev_fields_byte.hex()}")
+                    num_dev_fields = num_dev_fields_byte[0]
+                    for i in range(num_dev_fields):
+                        dev_field_bytes = f.read(3)
+                        print(f"dev_field_bytes[{i}]: {dev_field_bytes.hex()}")
+                        field_num, size, dev_idx = struct.unpack("BBB", dev_field_bytes)
                         dev_fields.append((field_num, size, dev_idx))
                         total += size
-                    dev_field_defs[local_type] = dev_fields
                 definitions[local_type] = {
                     "endian": endian,
                     "fields": fields,
@@ -58,9 +78,12 @@ def parse_fit(path: Path) -> Workout:
                     "size": total,
                     "global_msg_num": global_msg_num,
                 }
+                print(f"definitions after: {definitions}")
+                print(f"Definition for local_type {local_type} added: {definitions.get(local_type)}")
             else:
+                print(f"Data message: local_type={local_type}, defn={definitions.get(local_type)}")
+                print(f"definitions at data message: {definitions}")
                 defn = definitions.get(local_type)
-                print(f"Data message: local_type={local_type}, defn={defn}")
                 if not defn:
                     print("No definition for local_type, skipping.")
                     break

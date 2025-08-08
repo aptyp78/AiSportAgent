@@ -3,23 +3,36 @@ import struct
 def make_fit_with_devfields(path):
     # Minimal FIT with developer field definition and one data message
     with open(path, "wb") as f:
-        # Header: size=14, protocol=0, profile=0, data_size=10
-        f.write(bytes([14, 0, 0]) + struct.pack("<I", 10) + b".FIT" + b"\x00" * 2)
-        # Definition message (local_type=0, developer data flag set)
-        f.write(bytes([0xA0]))  # def header: 0x80 (definition) | 0x20 (developer data)
-        f.write(bytes([0, 0]))  # reserved, arch
-        f.write(struct.pack("<H", 20))  # global_msg_num
-        f.write(bytes([2]))  # num_fields
-        # field_num=253 (timestamp, 4 bytes), field_num=1 (1 byte)
-        f.write(bytes([253, 4, 0]))  # timestamp field
-        f.write(bytes([1, 1, 0]))    # field_num=1, size=1, base_type=0
-        f.write(bytes([1]))  # num_dev_fields
-        f.write(bytes([2, 1, 0]))  # dev_field_num, size, dev_idx
-        # Data message (local_type=0)
-        f.write(bytes([0x00]))  # data header
-        f.write(struct.pack("<I", 123456))  # timestamp value
-        f.write(bytes([5]))     # field value
-        f.write(bytes([7]))     # dev field value
+        # Calculate correct data_size: definition + data message
+        def_header = bytes([0xA0])
+        reserved = bytes([0])
+        arch = bytes([0])
+        global_msg_num = struct.pack("<H", 20)
+        num_fields = bytes([2])
+        field1 = bytes([253, 4, 0])  # timestamp field
+        field2 = bytes([1, 1, 0])    # field_num=1, size=1, base_type=0
+        num_dev_fields = bytes([1])
+        dev_field = bytes([2, 1, 0])
+        definition = def_header + reserved + arch + global_msg_num + num_fields + field1 + field2 + num_dev_fields + dev_field
+        data_header = bytes([0x00])
+        timestamp = struct.pack("<I", 123456)
+        field_value = bytes([5])
+        dev_field_value = bytes([7])
+        data_message = data_header + timestamp + field_value + dev_field_value
+        data_size = len(definition) + len(data_message)
+        # Header: size=14, protocol=0, profile=0, data_size=calculated
+        header = bytes([14])
+        header += bytes([0])  # protocol_version
+        header += struct.pack("<H", 0)  # profile_version
+        header += struct.pack("<I", data_size)  # data_size
+        header += b".FIT"
+        header += b"\x00" * 2
+        print(f"Header: {header.hex()}")
+        f.write(header)
+        print(f"Definition: {definition.hex()}")
+        f.write(definition)
+        print(f"Data message: {data_message.hex()}")
+        f.write(data_message)
 
 def make_compressed_ts_fit(path):
     with open(path, "wb") as f:
