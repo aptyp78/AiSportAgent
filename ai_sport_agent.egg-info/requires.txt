@@ -1,0 +1,10 @@
+pydantic<3,>=2.5
+typer<1,>=0.12
+fastapi<1,>=0.110
+
+[dev]
+pytest>=7
+hypothesis>=6
+httpx>=0.24
+uvicorn[standard]>=0.23
+tqdm>=4.66
