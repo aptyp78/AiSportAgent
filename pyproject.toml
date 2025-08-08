@@ -21,7 +21,8 @@ dev = [
   "hypothesis>=6",
   "httpx>=0.24",
   "uvicorn[standard]>=0.23",
-  "tqdm>=4.66"
+  "tqdm>=4.66",
+  "python-multipart"
 ]
 
 [project.scripts]
