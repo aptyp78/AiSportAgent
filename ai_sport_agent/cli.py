@@ -3,7 +3,19 @@
 import typer
 from pathlib import Path
 import json
-from ai_sport_agent.parsers.base_parser import StubParser
+def get_parser_for_file(file: Path):
+    ext = file.suffix.lower()
+    if ext == ".fit":
+        from ai_sport_agent.parsers.fit_parser import parse_fit
+        return parse_fit
+    elif ext == ".gpx":
+        from ai_sport_agent.parsers.gpx_parser import parse_gpx
+        return parse_gpx
+    elif ext == ".tcx":
+        from ai_sport_agent.parsers.tcx_parser import parse_tcx
+        return parse_tcx
+    else:
+        raise typer.Exit(code=1)
 
 app = typer.Typer(help="AI Sport Agent CLI")
 
@@ -23,11 +35,12 @@ def inspect(file: Path):
 
 @app.command()
 def export(file: Path, json_out: Path = typer.Option(..., "--json")):
-    """Export parsed FIT file to JSON."""
-    parser = StubParser()
-    workout = parser.parse(file)
+    """Export parsed file to JSON."""
+    parser = get_parser_for_file(file)
+    workout = parser(file)
     with json_out.open("w") as f:
-        json.dump({"laps": [lap.dict() for lap in workout.laps], "events": [ev.dict() for ev in workout.events]}, f)
+        import json
+        json.dump(workout.model_dump(), f, default=str)
     typer.echo(f"Exported to {json_out}")
 
 if __name__ == "__main__":
