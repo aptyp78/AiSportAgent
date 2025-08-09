@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gpx version="1.1" creator="test" xmlns="http://www.topografix.com/GPX/1/1" xmlns:gpxtpx="http://www.garmin.com/xmlschemas/TrackPointExtension/v1">
+  <trk>
+    <name>Mini GPX</name>
+    <trkseg>
+      <trkpt lat="55.0" lon="37.0">
+        <ele>200</ele>
+        <time>2024-06-01T12:00:00Z</time>
+        <extensions>
+          <gpxtpx:hr>120</gpxtpx:hr>
+        </extensions>
+      </trkpt>
+      <trkpt lat="55.0001" lon="37.0001">
+        <ele>201</ele>
+        <time>2024-06-01T12:00:05Z</time>
+        <extensions>
+          <gpxtpx:hr>125</gpxtpx:hr>
+        </extensions>
+      </trkpt>
+    </trkseg>
+  </trk>
+</gpx>
