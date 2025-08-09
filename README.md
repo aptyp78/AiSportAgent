@@ -1,4 +1,5 @@
 # Fit Analyzer Next
+[![quality-gates](https://github.com/aptyp78/AiSportAgent/actions/workflows/quality-gates.yml/badge.svg?branch=main)](https://github.com/aptyp78/AiSportAgent/actions/workflows/quality-gates.yml)
 ![tests](https://github.com/aptyp78/AiSportAgent/actions/workflows/tests.yml/badge.svg)
 
 This project is a web application for analyzing FIT files using Next.js for the frontend and a Python backend. The application allows users to upload FIT files, which are then processed to extract various metrics related to fitness activities.
