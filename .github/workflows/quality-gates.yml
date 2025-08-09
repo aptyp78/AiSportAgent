@@ -1,9 +1,10 @@
 name: quality-gates
 on:
   push:
-    paths: [ "ai_sport_agent/**", "examples/**", "docs/**", ".github/workflows/**" ]
+    branches: [ main ]
   pull_request:
-    paths: [ "ai_sport_agent/**", "examples/**", "docs/**", ".github/workflows/**" ]
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
 jobs:
   crc-and-tests:
     runs-on: ubuntu-latest
