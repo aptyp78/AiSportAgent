@@ -1,9 +1,16 @@
 """FastAPI v1 endpoints for FIT parsing."""
 
+
 from fastapi import FastAPI, UploadFile, File
+from pathlib import Path
 from ai_sport_agent.parsers.base_parser import StubParser
+from ai_sport_agent.parsers.fit_parser import parse_fit
+from ai_sport_agent.parsers.errors import FitCRCError
 from pydantic import ValidationError
 from ai_sport_agent.core.models import Workout
+
+app = FastAPI()
+
 @app.post("/v1/validate")
 async def validate(data: dict):
     try:
@@ -12,7 +19,29 @@ async def validate(data: dict):
     except ValidationError as e:
         return {"valid": False, "errors": e.errors()}
 
-app = FastAPI()
+@app.post("/v1/validate-fit")
+async def validate_fit(file: UploadFile = File(...)):
+    try:
+        # Сохраняем загруженный файл во временный путь
+        import tempfile
+        with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            tmp.write(await file.read())
+            tmp_path = tmp.name
+        workout = parse_fit(Path(tmp_path))
+        return {"valid": True, "workout": workout.dict()}
+    except FitCRCError as e:
+        return {
+            "valid": False,
+            "error": "FitCRCError",
+            "details": {
+                "where": e.details.get("where"),
+                "expected": e.details.get("expected"),
+                "actual": e.details.get("actual"),
+                "offset": e.details.get("offset")
+            }
+        }
+    except Exception as e:
+        return {"valid": False, "error": str(e)}
 
 @app.get("/v1/health")
 def health():
