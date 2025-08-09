@@ -1,0 +1,38 @@
+name: quality-gates
+on:
+  push:
+    paths: [ "ai_sport_agent/**", "examples/**", "docs/**", ".github/workflows/**" ]
+  pull_request:
+    paths: [ "ai_sport_agent/**", "examples/**", "docs/**", ".github/workflows/**" ]
+jobs:
+  crc-and-tests:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: ${{ matrix.python-version }} }
+      - name: Install
+        run: pip install -e ".[dev]"
+      - name: Unit & property tests
+        run: pytest -q
+      - name: Validate CRC (good/bad)
+        shell: bash
+        run: |
+          set -euo pipefail
+          echo "GOOD:"
+          fitparser validate tests/data/good.fit > /tmp/good.json
+          python - <<'PY'
+import json; j=json.load(open('/tmp/good.json'))
+assert j["valid"] is True and j["checks"]["crc"]=="pass"
+PY
+          echo "BAD (should fail CRC, non-zero exit allowed):"
+          set +e; fitparser validate tests/data/bad_crc.fit > /tmp/bad.json; set -e
+          python - <<'PY'
+import json; j=json.load(open('/tmp/bad.json'))
+assert j["valid"] is False and j["checks"]["crc"]=="fail"
+PY
+      - name: Smoke on examples
+        run: make smoke
