@@ -1,0 +1,10 @@
+{
+  "header": {"protocol": 0, "profile": 0},
+  "records": [
+    {"timestamp": 1717262400, "distance_m": 0, "power": 180, "hr_bpm": 110, "cadence_rpm": 85, "speed_m_s": 7.2, "position_lat": 55.0, "position_long": 37.0},
+    {"timestamp": 1717262410, "distance_m": 72, "power": 185, "hr_bpm": 112, "cadence_rpm": 87, "speed_m_s": 7.4, "position_lat": 55.0001, "position_long": 37.0001}
+  ],
+  "laps": [{"start": 1717262400, "end": 1717262700, "distance_m": 2000}],
+  "events": [],
+  "schema_version": "1.0.0"
+}
