@@ -3,9 +3,36 @@
 import typer
 from pathlib import Path
 import json
-from ai_sport_agent.parsers.base_parser import StubParser
+import sys
+from pydantic import ValidationError
+from ai_sport_agent.core.models import Workout
 
 app = typer.Typer(help="AI Sport Agent CLI")
+@app.command()
+def schema(out: Path = typer.Option(None, "--out", help="Output file for schema")):
+    """Show or save JSON Schema for Workout."""
+    schema = Workout.model_json_schema()
+    if out:
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(json.dumps(schema, indent=2))
+        typer.echo(f"Schema saved to {out}")
+    else:
+        typer.echo(json.dumps(schema, indent=2))
+
+@app.command()
+def validate(json_file: Path):
+    """Validate JSON file against Workout schema."""
+    try:
+        data = json.loads(json_file.read_text())
+        Workout.model_validate(data)
+        typer.echo("Valid: True")
+        raise typer.Exit(code=0)
+    except ValidationError as e:
+        typer.echo(f"Valid: False\nErrors: {e.errors()}", err=True)
+        raise typer.Exit(code=1)
+    except Exception as e:
+        typer.echo(f"Error: {e}", err=True)
+        raise typer.Exit(code=1)
 
 @app.command()
 def ingest(path: Path):

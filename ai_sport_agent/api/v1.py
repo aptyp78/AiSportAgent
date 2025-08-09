@@ -2,7 +2,15 @@
 
 from fastapi import FastAPI, UploadFile, File
 from ai_sport_agent.parsers.base_parser import StubParser
+from pydantic import ValidationError
 from ai_sport_agent.core.models import Workout
+@app.post("/v1/validate")
+async def validate(data: dict):
+    try:
+        Workout.model_validate(data)
+        return {"valid": True, "errors": []}
+    except ValidationError as e:
+        return {"valid": False, "errors": e.errors()}
 
 app = FastAPI()
 
